@@ -1,0 +1,12 @@
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.video-grid {
+    width: 500px;
+    height: 500px;
+    background: lightcoral;
+}
