@@ -37,6 +37,11 @@ const JoinRoom = (props) => {
             }
             case "roomID": {
                 setRoomID(e.target.value);
+                break;
+            }
+            default:{
+                console.log("None");
+                break;
             }
         }
     }
