@@ -12,6 +12,11 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "express-fileupload": "^1.2.0",
+    "multer": "^1.4.2",
+    "simple-peer": "^9.7.2",
+    "socket.io": "^2.3.0",
+    "wrtc": "^0.4.6"
   }
 }

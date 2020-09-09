@@ -1,58 +1,41 @@
-var socket=io('/');
-const videoGrid=document.getElementById('video-grid')
-const myPeer=new Peer({
-    host:'/',
-    port:'9001'
-});
-const myVideo=document.createElement('video');
-myVideo.muted=true;
-const peers={}
-const mediastream=navigator.mediaDevices.getUserMedia({
-    video:true,
-    audio:true
-}).then(stream=>{
-  
-    AddVideoStream(myVideo,stream);
-    myPeer.on('call',call=>{
-        call.answer(stream);
-        const video=document.createElement('video')
-        call.on('stream',userVideoStream=>{
-            AddVideoStream(video,userVideoStream);
-        })
-    })
-    socket.on('user-connected',userId=>{
-        connectToNewUser(userId,stream);
-        
-    })
-})
-myPeer.on('open',id=>{
-    socket.emit('join-room',ROOM_ID,id);
-})
-function connectToNewUser(userId,stream){
-    const call=myPeer.call(userId,stream);
-    const video=document.createElement('video');
-    call.on('stream',userVideoStream=>{
-        AddVideoStream(video,userVideoStream);
-    })
-    call.on('close',()=>{
-        video.remove();
-    })
-    console.log("the call value for peer is",call)
-     peers[userId]=call;
-}
-socket.on('user-connected',userId=>{
-    console.log('user connected'+userId);
-});
-socket.on('user-disconnected',userId=>{
+const express = require("express");
+const app = express();
+const server = require("http").createServer(app);
+const io = require("socket.io")(server);
+const imageRouter = require("./routers/imageRouter");
+const cors = require("cors");
 
-    console.log(userId);
-    if(peers[userId]){peers[userId].close();}
-})
-function AddVideoStream(video,stream){
-    video.srcObject=stream 
-    video.addEventListener('loadedmetadata',()=>{
-        video.play();
+app.use(express.json());
+app.use(cors());
+app.use("/upload", imageRouter);
+
+io.on("connection", (socket) => {
+    socket.on("join", ({userName, roomID}) => {
+        const time = getCurrentTime(socket);
+        socket.join(roomID);
+        socket.emit("join", time);
+        socket.emit("message", { userName: "Admin", message: "You joined !" })
+        socket.to(roomID).emit("message", { userName: "Admin", message: `${userName} has joined !` });
     });
-    videoGrid.append(video);
 
+    socket.on("message", ({ userName, message, roomID }) => {
+        socket.to(roomID).emit("message", { userName, message });
+    });
+    
+    socket.on("send-image", ({ userName, img, roomID }) => {
+        socket.to(roomID).emit("send-image", { userName, img });
+    });
+
+    socket.on("disconnect", () => {
+        socket.broadcast.emit("message", { userName: "Admin", message: "A user has left !"  });
+    });
+});
+
+const getCurrentTime = (socket) => {
+    return new Date();
 }
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+    console.log("Server listening on port", PORT);
+});

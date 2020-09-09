@@ -3,25 +3,26 @@ import uuid from 'react-uuid';
 import './JoinRoom.css';
 
 const JoinRoom = (props) => {
-    const [username, setUserName] = useState("");
+    const [userName, setUserName] = useState("");
     const [roomID, setRoomID] = useState("");
     const [isValid, setisValid] = useState(true);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
-        console.log(username, roomID);
+        props.history.push("/room/" + roomID, {
+            userName
+        });
     }
 
     const createMeeting = () => {
 
-        if (username === "") {
+        if (userName === "") {
             setisValid(false);
             return;
         }
 
         props.history.push("/room/" + uuid(), {
-            username
+            userName
         });
     }
 
@@ -37,7 +38,9 @@ const JoinRoom = (props) => {
             }
             case "roomID": {
                 setRoomID(e.target.value);
+                break;
             }
+            default: {}
         }
     }
 
