@@ -2,37 +2,38 @@
     display: flex;
 }
 
-.chat-sidebar {
-    height: 100vh;
-    color: white;
-    background: #333744;
-    width: 20%;
-    overflow-y: scroll
-}
-
-/* Chat styles */
-
 .chat-main {
     flex: 1;
     display: flex;
     flex-direction: column;
     max-height: 100vh;
+    background-image: url("../../images/chat-background.jpg");
+    background-size: cover;
 }
-
-.chat-messages {
-    flex: 1;
-    padding: 24px 24px 0 24px;
-    overflow-y: scroll;
-}
-
-/* Message Styles */
 
 .message {
-    margin-bottom: 16px;
+    width: 100%;
+    margin-bottom: 10px;
+    height: auto;
+    box-shadow: 10px 3px #075E54;
+    border-radius: 15px;
+}
+/* rgb(153, 240, 66) */
+.chat-message {
+    padding: 16px 10px;
+    background: #075E54;
+    border-radius: 15px;
+    color: white;
+    width: 50%;
+}
+
+.user-name {
+    color: #22ffc0;
 }
 
 .message-align {
-    text-align: end;
+    position: relative;
+    left: 50%;
 }
 
 .img-align {
@@ -63,24 +64,25 @@
     flex-grow: 1;
 }
 
-.compose button {
+/* .compose button {
     font-size: 14px;
 }
 
 .compose button {
     cursor: pointer;
     padding: 12px;
-    background: #7C5CBF;
+    background: #333744;
     border: none;
     color: white;
     font-size: 16px;
     transition: background .3s ease;
     margin-bottom: 8px;
-}
+} */
 
-.info-icon {
-    color: #7C5CBF;
+.control-icon {
+    color: #333744;
     cursor: pointer;
+    margin-left: 10px;
 }
 
 input[type="file"] {
@@ -93,7 +95,7 @@ input[type="file"] {
     text-align: center;
     padding: 6px 12px;
     cursor: pointer;
-    background: #7C5CBF;
+    background: #333744;
     color: white;
     margin-left: 15px;
 }

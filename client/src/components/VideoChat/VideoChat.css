@@ -1,0 +1,10 @@
+.video-div {
+    width: 400px;
+    height: 400px;
+    background-color: coral;
+}
+
+.video-element {
+    width: 100%;
+    height: 100%;
+}

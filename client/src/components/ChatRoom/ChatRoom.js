@@ -5,87 +5,150 @@ import ShowDetails from '../ShowDetails/ShowDetails';
 import uuid from 'react-uuid';
 import Backdrop from '../../UI/Backdrop/Backdrop';
 import InfoIcon from '@material-ui/icons/Info';
-import axios from 'axios';
-// import AttachmentIcon from '@material-ui/icons/Attachment';
+import SendIcon from '@material-ui/icons/Send';
+import Messages from '../Messages/Messages';
+import ShowUsers from '../ShowUsers/ShowUsers';
+import Avatar from '../../images/avatar.png';
+import { getBase64 } from '../../utils';
+import AttachmentIcon from '@material-ui/icons/Attachment';
+import Post from '../Post/Post';
+import InfoMessage from '../../UI/InfoMessage/InfoMessage';
+import ShowPost from '../ShowPost/ShowPost';
+import ShowPerformance from '../ShowPerformance/ShowPerformance';
 
 const ENDPOINT = "localhost:5000/";
 const socket = socketIOClient(ENDPOINT);
 
-
-
 const ChatRoom = (props) => {
-    const [userName, setUserName] = useState("");
+    const [user, setUser] = useState({
+        id: "",
+        name: "",
+        img: Avatar
+    });
     const [roomID, setRoomID] = useState("");
     const [message, setMessage] = useState("");
     const [messages, setMessages] = useState([]);
     const [showDetails, setShowDetails] = useState(false);
-    const [img, setImg] = useState("");
+    const [uploadedImg, setUploadedImg] = useState("");
     const [messageAlign, setMessageAlign] = useState("");
     const [imageAlign, setImageAlign] = useState("");
+    const [availableUsers, setAvailableUsers] = useState([]);
+    const [showPost, setShowPost] = useState(false);
+    const [showInfoMessage, setShowInfoMessage] = useState(false);
+    const [post, setPost] = useState(null);
+    const [performance, setPerformance] = useState(null);
+    const [togglePerformance, setTogglePerformance] = useState(false);
     useEffect(() => {
         if (!props.location.state)
             return props.history.push("/");
 
-        setUserName(props.location.state.userName);
-        setRoomID(props.match.params.id);
-        socket.emit("join", { userName: props.location.state.userName, roomID: props.match.params.id });
-        socket.on("join", (time) => {
-            console.log(time);
+        const userName = props.location.state.userName;;
+        const getFromStorage = JSON.parse(window.localStorage.getItem("chat-details"));
+        if (getFromStorage) {
+            setUser(getFromStorage.user);
+            setRoomID(getFromStorage.roomID);
+        }
+        socket.emit("join", { userName, userImg: Avatar, roomID: props.match.params.id });
+        setUser(user => {
+            return {
+                ...user,
+                name: userName
+            }
         });
-        socket.on("message", ({ userName, message }) => {
+
+        setRoomID(props.match.params.id);
+        
+        socket.on("message", ({ userName, message, users }) => {
             setMessageAlign("");
             addNewMessage(userName, message);
+            setAvailableUsers(users);
         });
 
         socket.on("send-image", ({ img }) => {
             setImageAlign("");
             addImagetoMessages(img);
         });
-        
+
+        socket.on("room-data", ( {users }) => {
+            setAvailableUsers(users);
+        });
+
+        socket.on("question", details => {
+            setPost(details);
+        });
     }, []);
+
+    useEffect(() => {
+        const saveToStorage = {
+            user,
+            roomID
+        }
+
+        socket.on("get answer", details => {
+            setPerformance(details);
+        });
+
+        window.localStorage.setItem("chat-details", JSON.stringify(saveToStorage));
+    });
+
+
+    useEffect(() => {
+        socket.on("join", ({ time, id, userName }) => {
+            const updatedUser = {
+                ...user,
+                name: userName,
+                id
+            }
+            setUser(updatedUser);
+        });
+    }, [user]);
 
     const addNewMessage = (userName, message) => {
         const newMessage = (
-            <p className={"message " + messageAlign} key={uuid()}><span>{userName} - </span>{message}</p>
+            <div key={uuid()} className="message">
+                <div className={"chat-message " + messageAlign} >
+                    <h3 className="user-name">{userName}</h3>  
+                    {message}
+                </div>
+            </div>
         );
         setMessages(oldMessages => [ ...oldMessages, newMessage ]);
     }
 
     const addImagetoMessages = (img) => {
         const imgHtml = (
-            <img className={"img-msg " + imageAlign} src={img} key={uuid()} alt="image N/A" />
+            <img className={"img-msg " + imageAlign} src={img} key={uuid()} alt="N/A" />
         );
         setMessages(oldMessages => [ ...oldMessages, imgHtml ]);
     }
 
+    const showInfo = () => {
+        setTimeout(() => {
+            setShowInfoMessage(false);
+        }, 2000);
+    }
+
     const handleInputChange = (e) => {
         setMessage(e.target.value);
-        setUserName(props.location.state.userName);
         setMessageAlign("message-align");
     }
 
-    const arrayBufferToBase64 = (buffer) => {
-        var binary = '';
-        // var bytes = [].slice.call(new Uint8Array(buffer));
-        buffer.forEach((b) => binary += String.fromCharCode(b));
-        return window.btoa(binary);
-    };
-
     const sendMessage = async (e) => {
-        e.preventDefault();
         const roomID = props.match.params.id
-        if (message) {
-            socket.emit("message", { userName, message, roomID });
-            setMessageAlign("");
-            addNewMessage("You", message);
+        
+        if (uploadedImg) {
+            socket.emit("send-image", { userName: user.name, img: uploadedImg, roomID });
+            setImageAlign("");
+            addImagetoMessages(uploadedImg);
+            setUploadedImg("");
             setMessage("");
         }
 
-        if (img) {
-            socket.emit("send-image", { userName, img, roomID });
-            setImageAlign("");
-            addImagetoMessages(img);
-            setImg("");
+        if (message) {
+            socket.emit("message", { userName: user.name, message, roomID });
+            setMessageAlign("");
+            addNewMessage("You", message);
+            setMessage("");
         }
     }
 
@@ -93,24 +156,22 @@ const ChatRoom = (props) => {
         setShowDetails(prev => !prev);
     }
 
+    const togglePost = () => {
+        setShowPost(prev => !prev);
+    }
+
+    const changeTogglePerformance = () => {
+        setTogglePerformance(prev => !prev);
+    }
+
     const addFile = async (e) => {
-        // setFile(e.target.files[0]);
-        // setFileName(e.target.files[0].name);
+        setMessageAlign("message-align");
         setImageAlign("img-align")
         const file = e.target.files[0];
-        const formData = new FormData();
-        formData.append("file", file);
-
+        setMessage(file.name);
         try {
-            const res = await axios.post("http://localhost:5000/upload", formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            const buffer = res.data;
-            const base64Flag = "data:image.jpeg;base64,";
-            const imageStr = arrayBufferToBase64(buffer.data.data);
-            setImg(base64Flag + imageStr);
+            const base64Image = await getBase64(file);
+            setUploadedImg(base64Image);
         } catch(err) {
             if (err.response.status === 500) {
                 console.log("server error");
@@ -120,33 +181,57 @@ const ChatRoom = (props) => {
         }
     }
 
-    let show = showDetails ? <ShowDetails roomID={roomID} /> : null;
+    const openFiles = (e) => {
+        document.querySelector("#file-upload").click();
+    }
 
+    let show = showDetails ? <ShowDetails roomID={roomID} /> : null;
     return (
         <div className='chat'>
             <Backdrop show={showDetails} clicked={toggleInfo} />
-            <div id='sidebar' className='chat-sidebar'>
-
-            </div>
+            <ShowUsers socket={socket} user={user} users={availableUsers} />
             <div className='chat-main'>
-
-                <div className='chat-messages'>
-                    { messages }
-                </div>
+                <Messages messages={messages} />
 
                 <div className='compose'>
-                    <form id="message-form" onSubmit={sendMessage} >
+                    <form id="message-form" >
                         <textarea rows="1" name="message" type="text" placeholder="Message" value={message} onChange={handleInputChange} />
-                        <button>Send</button>
+                        <SendIcon fontSize="large" className="control-icon" onClick={sendMessage} />
+                        <InfoIcon fontSize="large" className="control-icon" onClick={toggleInfo} />
+
+                        <input id="file-upload" type="file" onChange={addFile} style={{display: "none"}} />
+                        <AttachmentIcon fontSize="large" className="control-icon" onClick={openFiles} />
+                        
                     </form>
-                    <InfoIcon fontSize="large" className="info-icon" onClick={toggleInfo} />
-                    <label htmlFor="file-upload" className="custom-file-upload">
-                        Custom Upload
-                    </label>
-                    <input id="file-upload" type="file" onChange={addFile} />
+                    <Backdrop show={showPost} clicked={togglePost} />
+                    <button onClick={togglePost}>Post</button>
+                    <button onClick={changeTogglePerformance}>Performance</button>
                     { show }
                 </div>
             </div>
+
+            {
+                showPost ? <Post socket={socket}
+                            userId={user.id}
+                            roomId={roomID}
+                            showInfoMessage={showInfo}
+                            setShowMessage={setShowInfoMessage}
+                    /> : null
+            }
+
+            {
+                showInfoMessage ? <InfoMessage>
+                    <p>Question has been posted !</p>
+                </InfoMessage> : null
+            }
+
+            {
+                post ? <ShowPost userName={user.name} socket={socket} post={post} setPost={setPost} /> : null
+            }
+
+            {
+                togglePerformance ? <ShowPerformance performance={performance} /> : null
+            }
         </div>
     );
 }

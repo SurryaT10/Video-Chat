@@ -1,0 +1,35 @@
+.chat-sidebar {
+    height: 100vh;
+    color: white;
+    background: #333744;
+    width: 350px;
+    overflow-y: scroll
+}
+
+.users-title {
+    display: flex;
+    align-items: center;
+}
+
+.list-title {
+    font-weight: 500;
+    font-size: 18px;
+    margin-bottom: 4px;
+    padding: 12px 24px 0 24px;
+    display: inline;
+}
+
+.single-user {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    border-bottom: 2px solid rgb(25, 0, 39);
+    padding: 0.5em;
+}
+
+.user-img {
+    height: 130px;
+    width: 140px;
+    cursor: pointer;
+    border-radius: 50%;
+}

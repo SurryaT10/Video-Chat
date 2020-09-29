@@ -24,6 +24,8 @@ const JoinRoom = (props) => {
         props.history.push("/room/" + uuid(), {
             userName
         });
+
+        sessionStorage.setItem("name", userName);
     }
 
     const handleInputChange = (e) => {
